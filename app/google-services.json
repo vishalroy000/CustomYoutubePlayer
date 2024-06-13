@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "438791933770",
+    "project_id": "youtuebeapi-8b122",
+    "storage_bucket": "youtuebeapi-8b122.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:438791933770:android:b09c525dcdc2dfdbb6bbb3",
+        "android_client_info": {
+          "package_name": "com.religioustext.mytube"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4vVXzyplnKmiZs-t2-_79Wyws5N-Z8ho"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
