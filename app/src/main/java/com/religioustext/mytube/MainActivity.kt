@@ -24,7 +24,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
+class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener, VideoAdapter.OnItemClickListener {
     lateinit var youTubePlayerView: YouTubePlayerView
     lateinit var videoId: String
 
@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        videoAdapter = VideoAdapter(videoList)
+        videoAdapter = VideoAdapter(videoList, this)
         recyclerView.adapter = videoAdapter
         youTubePlayerView = findViewById(R.id.youtube_player_view)
         addVideoButton = findViewById(R.id.addVideoButton)
@@ -67,16 +67,9 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             fetchVideosByCategory(selectedCategory)
         }
 
-
         youTubePlayerView.addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
-
-
             override fun onReady(player: YouTubePlayer) {
                 youTubePlayer = player
-
-//                youTubePlayer?.loadVideo(videoId, 0f)
-                youTubePlayer!!.loadOrCueVideo(lifecycle, videoId, 0f)
-
             }
         })
 
@@ -102,7 +95,7 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             .addOnSuccessListener { documents ->
                 videoList.clear()
                 for (document in documents) {
-                     videoId = document.getString("videoId").toString()
+                    val videoId = document.getString("videoId").toString()
                     if (videoId != null) {
                         fetchVideoDetails(videoId)
                     }
@@ -120,14 +113,24 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             .baseUrl("https://www.youtube.com/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-
         val service = retrofit.create(YoutubeApiService::class.java)
         val videoUrl = "https://www.youtube.com/watch?v=$videoId"
+
         service.getVideoDetails(videoUrl).enqueue(object : Callback<YoutubeVideoResponse> {
             override fun onResponse(call: Call<YoutubeVideoResponse>, response: Response<YoutubeVideoResponse>) {
                 response.body()?.let { video ->
-                    videoList.add(video)
-                    videoAdapter.notifyDataSetChanged()
+                    // Extract videoId from thumbnail_url
+                    val regex = "(?<=vi/)[^/]*".toRegex()
+                    val extractedVideoId = regex.find(video.thumbnail_url)?.value
+
+                    if (extractedVideoId != null) {
+
+                       this@MainActivity.videoId = extractedVideoId
+                        videoList.add(video)
+                        videoAdapter.notifyDataSetChanged()
+                    } else {
+                        Toast.makeText(this@MainActivity, "Error extracting video ID", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
 
@@ -136,5 +139,30 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             }
         })
     }
+
+    override fun onItemClick(video: YoutubeVideoResponse) {
+        val videoId = extractVideoIdFromThumbnailUrl(video.thumbnail_url)
+        if (videoId != null) {
+            youTubePlayer?.loadOrCueVideo(lifecycle, videoId, 0f)
+        } else {
+            Toast.makeText(this, "Error extracting video ID", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+//    override fun onItemClick(video: YoutubeVideoResponse) {
+//
+//        videoId =    extractVideoIdFromThumbnailUrl(video.thumbnail_url)
+////        videoId = video.videoId
+//        youTubePlayer?.loadOrCueVideo(lifecycle, videoId.toString(), 0f)
+//
+//    }
+
+    fun extractVideoIdFromThumbnailUrl(thumbnailUrl: String): String? {
+        val pattern = "(?<=vi/)[^/]*"
+        val regex = pattern.toRegex()
+        return regex.find(thumbnailUrl)?.value
+    }
+
 }
+
 

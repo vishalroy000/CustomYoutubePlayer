@@ -14,5 +14,7 @@ data class YoutubeVideoResponse(
     val thumbnail_width: Int,
     val thumbnail_url: String,
     val html: String
+
 )
+
 
